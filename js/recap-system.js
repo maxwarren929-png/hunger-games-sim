@@ -125,7 +125,7 @@ function showFallenView() {
       card.style.animationDelay = `${index * 0.1}s`;
       card.innerHTML = `
         <div class="recap-portrait">
-          ${event.mugshot ? `<img src="${event.mugshot}" style="width: 100%; height: 100%; border-radius: 50%; filter: grayscale(1);">` : "🌑"}
+          ${event.mugshot ? `<img src="${event.mugshot}" style="width: 100%; height: 100%; border-radius: 50%; filter: grayscale(1);">` : "[fallen]"}
         </div>
         <div class="recap-name">${escapeHtml(event.victim.name)}</div>
         <div class="recap-detail">District ${event.victim.district}</div>

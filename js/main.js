@@ -370,12 +370,12 @@ const els = {
 };
 
 const weaponLabels = {
-  gun: ["a glock", "🔫"],
-  bat: ["a club", "🏏"],
-  shotgun: ["a shotgun", "🔫"],
-  axe: ["an axe", "🪓"],
-  fists: ["their fists", "👊"],
-  laser_eyes: ["laser eyes", "👀"],
+  gun: ["a glock", ""],
+  bat: ["a club", ""],
+  shotgun: ["a shotgun", ""],
+  axe: ["an axe", ""],
+  fists: ["their fists", ""],
+  laser_eyes: ["laser eyes", ""],
 };
 
 init();
@@ -456,10 +456,10 @@ function setupUi() {
     } else if (val.startsWith("AIza")) {
       keyWarning.textContent = "";
     } else if (val.startsWith("ghp_") || val.startsWith("github_pat_")) {
-      keyWarning.textContent = "✅ GitHub token detected. Use with 'Test' button.";
+      keyWarning.textContent = "GitHub token detected. Use with 'Test' button.";
       keyWarning.style.color = "#62d46b";
     } else {
-      keyWarning.textContent = "⚠️ Unrecognized key format. Gemini keys start with 'AIza', GitHub tokens with 'ghp_'.";
+      keyWarning.textContent = "Unrecognized key format. Gemini keys start with 'AIza', GitHub tokens with 'ghp_'.";
       keyWarning.style.color = "#ff473f";
     }
   });
@@ -499,23 +499,23 @@ function setupUi() {
       const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
-        testBtn.textContent = "✅ OK";
+        testBtn.textContent = "OK";
         testBtn.style.color = "#62d46b";
         keyWarning.textContent = `AI Brain connected via ${isGithub ? 'GitHub' : 'Google'}!`;
       } else {
         const msg = data.error?.message || data.message || "";
         if (DEBUG) console.error("Test API Fail:", data);
         if (response.status === 404 && !isGithub) {
-          testBtn.textContent = "❌ REGION?";
-          keyWarning.textContent = "⚠️ Google blocks Free Tier in UK/EU. Use a VPN or try your GitHub key.";
+          testBtn.textContent = "REGION?";
+          keyWarning.textContent = "Google blocks Free Tier in UK/EU. Use a VPN or try your GitHub key.";
         } else {
-          testBtn.textContent = "❌ FAIL";
-          keyWarning.textContent = `⚠️ ${isGithub ? 'GitHub' : 'Google'} Error ${response.status}: ${msg || 'Access denied.'}`;
+          testBtn.textContent = "FAIL";
+          keyWarning.textContent = `${isGithub ? 'GitHub' : 'Google'} Error ${response.status}: ${msg || 'Access denied.'}`;
         }
         testBtn.style.color = "#e55248";
       }
     } catch (e) {
-      testBtn.textContent = "❌ ERR";
+      testBtn.textContent = "ERR";
       testBtn.style.color = "#e55248";
     }
     setTimeout(() => {
@@ -568,7 +568,7 @@ function setupUi() {
   els.speedBtn.addEventListener("click", () => {
     speedIndex = (speedIndex + 1) % SPEED_LEVELS.length;
     const speed = SPEED_LEVELS[speedIndex];
-    els.speedBtn.textContent = `⏵ ${speed}x`;
+    els.speedBtn.textContent = `${speed}x`;
   });
 
   setTributeCount(tributeCount);
@@ -627,8 +627,8 @@ function setTributeCount(count, rosterData = null) {
       <input class="tribute-name" type="text" maxlength="${CONSTANTS.TRIBUTE.NAME_MAX_LENGTH}" value="${escapeAttr(rowData.name || `Tribute ${i + 1}`)}">
       <span class="district-label">D</span>
       <input class="tribute-district" type="number" min="${CONSTANTS.DISTRICT.MIN}" max="${CONSTANTS.DISTRICT.MAX}" value="${escapeAttr(rowData.district || Math.floor(i / 2) + 1)}">
-      <button class="ai-toggle-btn ${isAI ? 'active' : ''}" title="Toggle AI Brain"${FEATURE_FLAGS.aiBrain ? '' : ' hidden'}>🧠</button>
-      <button class="trait-toggle-btn" title="Add Traits"${FEATURE_FLAGS.traits ? '' : ' hidden'}>🧬</button>
+      <button class="ai-toggle-btn ${isAI ? 'active' : ''}" title="Toggle AI Brain"${FEATURE_FLAGS.aiBrain ? '' : ' hidden'}>AI</button>
+      <button class="trait-toggle-btn" title="Add Traits"${FEATURE_FLAGS.traits ? '' : ' hidden'}>Traits</button>
       <div class="trait-picker" style="display:none"${FEATURE_FLAGS.traits ? '' : ' hidden'}>
         ${Object.keys(TRAIT_LIBRARY).map(t => `
           <label class="trait-checkbox">
@@ -896,7 +896,7 @@ function setupInput() {
   function togglePause() {
     if (gameState !== "playing") return;
     isPaused = !isPaused;
-    pauseBtn.textContent = isPaused ? "▶" : "⏸";
+    pauseBtn.textContent = isPaused ? "Resume" : "Pause";
     pauseOverlay.style.display = isPaused ? "flex" : "none";
   }
   pauseBtn.addEventListener("click", togglePause);
@@ -1658,7 +1658,7 @@ function updateAlliance() {
   } else if (activeAllianceIds.size === 0 && alive.length > 1) {
     // No alliances remain and the match isn't over — every tribute for themselves.
     if (!allianceBrokenLogged) {
-      pushLog("💔 ALLIANCE BROKEN — every tribute for themselves!", true);
+      pushLog("ALLIANCE BROKEN — every tribute for themselves!", true);
       allianceBrokenLogged = true;
     }
   }
@@ -2227,7 +2227,7 @@ async function processAIBrains() {
         }
       } catch (err) {
         peep.isThinking = false;
-        pushLog(`<span style="color:#ff473f">🧠 AI Brain Error (${escapeHtml(peep.name)}): API call failed.</span>`, false);
+        pushLog(`<span style="color:#ff473f">AI Brain Error (${escapeHtml(peep.name)}): API call failed.</span>`, false);
         if (DEBUG) console.error("AI Brain Error:", err);
       }
     }

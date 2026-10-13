@@ -109,7 +109,7 @@ JSON Format:
       throw new Error("No JSON object found in AI response");
     } catch (error) {
       clearTimeout(timeoutId);
-      if (DEBUG) console.error("🧠 AI Brain Error:", error);
+      if (DEBUG) console.error("AI Brain Error:", error);
       return null;
     }
   }
