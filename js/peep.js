@@ -147,8 +147,8 @@ class Peep {
     this.aiGoalOverride = null; // { goal, targetId, shout, expiresAt }
     this.isThinking = false;
 
-    this.traits = [...(config.traits || [])];
-    this.applyTraits(this.traits);
+    this.traits = FEATURE_FLAGS.traits ? [...(config.traits || [])] : [];
+    if (FEATURE_FLAGS.traits) this.applyTraits(this.traits);
     this.applyAbilities(config.abilities || {});
     this.profile = Peep.createProfile(this.stats);
 
@@ -160,6 +160,7 @@ class Peep {
   }
 
   shout(text, type = "social", duration = CONSTANTS.DIALOGUE.DEFAULT_DURATION) {
+    if (!FEATURE_FLAGS.communication) return;
     this.shoutText = text;
     this.shoutType = type;
     this.shoutTimer = duration;
@@ -766,6 +767,7 @@ class Peep {
 
     // --- ROMANCE LOGIC ---
     tryFallInLove(peeps, world, dt) {
+      if (!FEATURE_FLAGS.romance || !FEATURE_FLAGS.communication) return;
       if (this.loverId) return;
       const MIN_COURTSHIP = CONSTANTS.ROMANCE.MIN_COURTSHIP; // seconds of cumulative proximity needed
       for (const other of peeps) {
@@ -1027,6 +1029,7 @@ class Peep {
     }
 
     considerCasualChat(world) {
+      if (!FEATURE_FLAGS.communication || !FEATURE_FLAGS.romance) return;
       if (this.casualChatCooldown > 0) return;
       if (this.shoutTimer > 0 || this.conversationCooldown > 0) return;
       if (this.stressLevel > CONSTANTS.CASUAL_CHAT.STRESS_MAX) return;

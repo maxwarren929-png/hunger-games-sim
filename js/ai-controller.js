@@ -1,6 +1,8 @@
 class AIController {
   static async fetchAIThought(peep, world) {
-    if (!world.apiKey) return null;
+    // Keep the integration available in source, but make the feature flag the
+    // final gate so no credentials or network requests are used while disabled.
+    if (!FEATURE_FLAGS.aiBrain || !world.apiKey) return null;
     
     const isGithub = world.apiKey.startsWith("ghp_") || world.apiKey.startsWith("github_pat_");
     

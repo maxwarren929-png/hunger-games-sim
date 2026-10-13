@@ -1,5 +1,11 @@
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
+
+// Run from any directory. Pass a repository path as the first argument, or use
+// the directory containing this script by default:
+//   node audit-script.js [repo-root]
+const repoRoot = path.resolve(process.argv[2] || __dirname);
 
 const files = [
   'js/main.js',
@@ -18,7 +24,17 @@ const results = {
 };
 
 function analyzeFile(filePath) {
-  const content = fs.readFileSync(path.join('C:/Users/tacob/projects/cursor-worshippers', filePath), 'utf-8');
+  const absolutePath = path.join(repoRoot, filePath);
+  if (!fs.existsSync(absolutePath)) {
+    results.potentialBugs.push(`${filePath}: file not found (${absolutePath})`);
+    return;
+  }
+
+  const content = fs.readFileSync(absolutePath, 'utf-8');
+  const syntaxCheck = spawnSync(process.execPath, ['--check', absolutePath], { encoding: 'utf-8' });
+  if (syntaxCheck.status !== 0) {
+    results.syntaxErrors.push(`${filePath}: ${syntaxCheck.stderr.trim()}`);
+  }
   const lines = content.split('\n');
 
   // Check for common issues

@@ -1,5 +1,15 @@
 const DEBUG = false;
 
+// Optional systems are kept in the codebase but disabled while the core
+// simulation and visual language are being simplified. Flip these switches to
+// restore a system without deleting its implementation.
+const FEATURE_FLAGS = {
+  communication: false,
+  aiBrain: false,
+  traits: false,
+  romance: false,
+};
+
 const GAME_CONSTANTS = {
   dayLength: 60,
   worldDimensions: { width: 3000, height: 1800 },

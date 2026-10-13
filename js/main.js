@@ -421,6 +421,8 @@ function registerAtlases() {
 }
 
 function setupUi() {
+  applyFeatureFlagsToUi();
+
   els.countDown.addEventListener("click", () => setTributeCount(tributeCount - 1));
   els.countUp.addEventListener("click", () => setTributeCount(tributeCount + 1));
   els.startBtn.addEventListener("click", () => {
@@ -440,12 +442,14 @@ function setupUi() {
   els.recapNextBtn.addEventListener("click", nextHighlight);
   els.recapFinishBtn.addEventListener("click", hideRecap);
 
-  // AI Test Button
+  // AI Test Button (the panel is disabled by default; this remains wired for
+  // when FEATURE_FLAGS.aiBrain is enabled again).
   const testBtn = document.getElementById("test-api-btn");
   const keyInput = document.getElementById("api-key-input");
   const keyWarning = document.getElementById("key-warning");
 
   keyInput.addEventListener("input", () => {
+    if (!FEATURE_FLAGS.aiBrain) return;
     const val = keyInput.value.trim();
     if (!val) {
       keyWarning.textContent = "";
@@ -461,6 +465,7 @@ function setupUi() {
   });
 
   testBtn.addEventListener("click", async () => {
+    if (!FEATURE_FLAGS.aiBrain) return;
     const key = document.getElementById("api-key-input").value.trim();
     if (!key) {
       testBtn.textContent = "NEED KEY";
@@ -569,6 +574,19 @@ function setupUi() {
   setTributeCount(tributeCount);
 }
 
+function applyFeatureFlagsToUi() {
+  const aiPanel = document.getElementById("ai-settings-panel");
+  if (aiPanel) aiPanel.hidden = !FEATURE_FLAGS.aiBrain;
+
+  // Keep the controls in the markup for later re-enablement, but avoid
+  // presenting optional systems in the simplified setup screen.
+  document.querySelectorAll(".ai-toggle-btn, .trait-toggle-btn, .trait-picker").forEach((element) => {
+    element.hidden = element.classList.contains("ai-toggle-btn")
+      ? !FEATURE_FLAGS.aiBrain
+      : !FEATURE_FLAGS.traits;
+  });
+}
+
 function setTributeCount(count, rosterData = null) {
   tributeCount = Math.max(CONSTANTS.TRIBUTE.COUNT_MIN, Math.min(CONSTANTS.TRIBUTE.COUNT_MAX, count));
   els.countDisplay.textContent = tributeCount;
@@ -609,9 +627,9 @@ function setTributeCount(count, rosterData = null) {
       <input class="tribute-name" type="text" maxlength="${CONSTANTS.TRIBUTE.NAME_MAX_LENGTH}" value="${escapeAttr(rowData.name || `Tribute ${i + 1}`)}">
       <span class="district-label">D</span>
       <input class="tribute-district" type="number" min="${CONSTANTS.DISTRICT.MIN}" max="${CONSTANTS.DISTRICT.MAX}" value="${escapeAttr(rowData.district || Math.floor(i / 2) + 1)}">
-      <button class="ai-toggle-btn ${isAI ? 'active' : ''}" title="Toggle AI Brain">🧠</button>
-      <button class="trait-toggle-btn" title="Add Traits">🧬</button>
-      <div class="trait-picker" style="display:none">
+      <button class="ai-toggle-btn ${isAI ? 'active' : ''}" title="Toggle AI Brain"${FEATURE_FLAGS.aiBrain ? '' : ' hidden'}>🧠</button>
+      <button class="trait-toggle-btn" title="Add Traits"${FEATURE_FLAGS.traits ? '' : ' hidden'}>🧬</button>
+      <div class="trait-picker" style="display:none"${FEATURE_FLAGS.traits ? '' : ' hidden'}>
         ${Object.keys(TRAIT_LIBRARY).map(t => `
           <label class="trait-checkbox">
             <input type="checkbox" value="${t}" ${rowTraits.includes(t) ? 'checked' : ''}>
@@ -642,9 +660,11 @@ function readTributeConfigs() {
   const configs = rows.map((row, index) => {
     const name = row.querySelector(".tribute-name").value.trim();
     const district = Number(row.querySelector(".tribute-district").value);
-    const traits = [...row.querySelectorAll(".trait-picker input:checked")].map(cb => cb.value);
-    const isAI = row.querySelector(".ai-toggle-btn").classList.contains("active");
-    const stats = row.dataset.stats ? JSON.parse(row.dataset.stats) : undefined;
+    const traits = FEATURE_FLAGS.traits
+      ? [...row.querySelectorAll(".trait-picker input:checked")].map(cb => cb.value)
+      : [];
+    const isAI = FEATURE_FLAGS.aiBrain && row.querySelector(".ai-toggle-btn").classList.contains("active");
+    const stats = FEATURE_FLAGS.traits && row.dataset.stats ? JSON.parse(row.dataset.stats) : undefined;
 
     return { id: index, name, district, traits, isAI, stats };
   });
@@ -678,7 +698,10 @@ function startGame(configs) {
   state.slowMo = { timer: 0, duration: 0, scale: 1 };
   state.processedDeaths = new Set();
   state.cursor = new CursorEntity(WORLD.center.x, WORLD.center.y);
-  apiKey = document.getElementById("api-key-input").value.trim();
+  // API credentials are intentionally ignored while the optional AI system is disabled.
+  apiKey = FEATURE_FLAGS.aiBrain
+    ? document.getElementById("api-key-input").value.trim()
+    : "";
   state.aiTimer = CONSTANTS.AI.BRAIN_RESET;
   state.playerPeep = null;
   state.controlMode = els.controlModeToggle?.checked || false;
@@ -705,13 +728,18 @@ function startGame(configs) {
     const angle = (index / configs.length) * Math.PI * 2;
     const radius = GAME_CONSTANTS.spawnRadius;
     
-    // Apply character preset if name matches
-    const charPreset = CHARACTER_LIBRARY[config.name.toLowerCase()];
+    // Apply character presets only when the optional trait system is enabled.
+    const charPreset = FEATURE_FLAGS.traits && CHARACTER_LIBRARY[config.name.toLowerCase()];
     if (charPreset) {
         config.traits = [...(config.traits || []), ...charPreset.traits];
         config.stats = { ...charPreset.stats, ...(config.stats || {}) };
         config.abilities = { ...(config.abilities || {}), ...(charPreset.abilities || {}) };
+    } else if (!FEATURE_FLAGS.traits) {
+        config.traits = [];
+        config.stats = undefined;
+        config.abilities = {};
     }
+    if (!FEATURE_FLAGS.aiBrain) config.isAI = false;
     
     config.center = WORLD.center;
     state.peeps.push(new Peep(config, WORLD.center.x + Math.cos(angle) * radius, WORLD.center.y + Math.sin(angle) * radius));
@@ -2171,7 +2199,7 @@ function pushAllEvent(event) {
   }
 }
 async function processAIBrains() {
-  if (!apiKey) return;
+  if (!FEATURE_FLAGS.aiBrain || !apiKey) return;
 
   const world = createWorldContext();
   const aiTributes = state.peeps.filter(p => p.alive && p.isAI && !p.isThinking);
